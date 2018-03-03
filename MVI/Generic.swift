@@ -16,9 +16,9 @@ protocol Intent {
 }
 
 struct Binder<M: Model, V: View, I: Intent> where M.Intent == I, V.Model == M, I.View == V {
-    let model: M
+    private let model: M
     let view: V
-    let intent: I
+    private let intent: I
     
     init(_ model: M, _ view: V, _ intent: I) {
         self.model = model
@@ -33,4 +33,3 @@ struct Binder<M: Model, V: View, I: Intent> where M.Intent == I, V.Model == M, I
         intent.observe(view)
     }
 }
-
