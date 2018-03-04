@@ -21,7 +21,7 @@ class CounterComponent {
         
         increment.rx.tap.subscribe(binder.view.increment).disposed(by: disposeBag)
         decrement.rx.tap.subscribe(binder.view.decrement).disposed(by: disposeBag)
-        binder.view.text.debug().bind(to: label.rx.text).disposed(by: disposeBag)
+        binder.view.text.bind(to: label.rx.text).disposed(by: disposeBag)
     }
 }
 
