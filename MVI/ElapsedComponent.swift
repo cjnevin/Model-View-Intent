@@ -1,7 +1,7 @@
 import RxSwift
 import RxCocoa
 
-class ElapsedComponent {
+final class ElapsedComponent {
     private let disposeBag = DisposeBag()
     private let binder = Binder(ElapsedModel(), ElapsedView(), ElapsedIntent())
     let label = UILabel()
@@ -14,37 +14,49 @@ class ElapsedComponent {
         reset.setTitleColor(.white, for: .normal)
         reset.setTitle("Reset Elapsed Time", for: .normal)
         
-        reset.rx.tap.subscribe(binder.view.reset).disposed(by: disposeBag)
-        binder.view.text.bind(to: label.rx.text).disposed(by: disposeBag)
+        disposeBag.insert(bindUI())
+    }
+    
+    private func bindUI() -> Disposable {
+        return CompositeDisposable(
+            binder.bind(),
+            reset.rx.tap.subscribe(binder.view.reset),
+            binder.view.text.bind(to: label.rx.text))
     }
 }
 
-struct ElapsedModel: Model {
-    private let disposeBag = DisposeBag()
+private struct ElapsedModel: Model {
     fileprivate let seconds = BehaviorSubject<Int>(value: 0)
     
-    func observe(_ intent: ElapsedIntent) {
-        intent.reset.startWith(()).flatMapLatest { _ in
-            Observable<Int>.timer(0, period: 1, scheduler: MainScheduler.asyncInstance)
-        }.subscribe(seconds).disposed(by: disposeBag)
+    private func timer() -> Observable<Int> {
+        return Observable<Int>.timer(0, period: 1, scheduler: MainScheduler.asyncInstance)
+    }
+    
+    func observe(_ intent: ElapsedIntent) -> Disposable {
+        return intent.reset
+            .startWith(())
+            .flatMapLatest { _ in self.timer() }
+            .subscribe(seconds)
     }
 }
 
-struct ElapsedView: View {
-    private let disposeBag = DisposeBag()
+private struct ElapsedView: View {
     fileprivate let text = BehaviorSubject<String>(value: "")
     fileprivate let reset = PublishSubject<Void>()
     
-    func observe(_ model: ElapsedModel) {
-        model.seconds.map({ "Seconds elapsed: \($0)" }).subscribe(text).disposed(by: disposeBag)
+    private func elapsed(_ seconds: Int) -> String {
+        return "Seconds elapsed: \(seconds)"
+    }
+    
+    func observe(_ model: ElapsedModel) -> Disposable {
+        return model.seconds.map(elapsed).subscribe(text)
     }
 }
 
-struct ElapsedIntent: Intent {
-    private let disposeBag = DisposeBag()
+private struct ElapsedIntent: Intent {
     fileprivate let reset = PublishSubject<Void>()
     
-    func observe(_ view: ElapsedView) {
-        view.reset.subscribe(reset).disposed(by: disposeBag)
+    func observe(_ view: ElapsedView) -> Disposable {
+        return view.reset.subscribe(reset)
     }
 }

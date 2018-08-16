@@ -1,7 +1,7 @@
 import UIKit
 import SnapKit
 
-class ViewController: UIViewController {
+final class ViewController: UIViewController {
     let counter = CounterComponent()
     let elapsed = ElapsedComponent()
     
